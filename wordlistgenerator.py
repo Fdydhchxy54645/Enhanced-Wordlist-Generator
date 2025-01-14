@@ -14,20 +14,26 @@ CHAR_SETS = {
 
 def clear_screen():
     """Clears the terminal screen."""
-    os.system('cls' if os.name == 'nt' else 'clear')
+    try:
+        os.system('cls' if os.name == 'nt' else 'clear')
+    except Exception as e:
+        print(f"\033[31mError clearing screen: {e}\033[0m")
 
 def display_intro():
     """Displays the starting screen and information about the tool."""
-    clear_screen()
-    print("\033[31m" + "█████████████████████████████████████████████████████████████████" + "\033[0m")
-    print("\033[32m" + "   Enhanced Wordlist Generator" + "\033[0m")
-    print("\033[34m" + "-----------------------------------------------------------------" + "\033[0m")
-    print("\033[36m" + "     Generate your own wordlists with advanced options" + "\033[0m")
-    print("\033[34m" + "-----------------------------------------------------------------" + "\033[0m")
-    print("\033[33m" + "[*] Version 2.1 | By Sagar Budha" + "\033[0m")
-    print("\033[36m" + "[*] Use responsibly and for authorized purposes only!" + "\033[0m")
-    print("\n")
-    time.sleep(2)
+    try:
+        clear_screen()
+        print("\033[31m" + "█████████████████████████████████████████████████████████████████" + "\033[0m")
+        print("\033[32m" + "   Enhanced Wordlist Generator" + "\033[0m")
+        print("\033[34m" + "-----------------------------------------------------------------" + "\033[0m")
+        print("\033[36m" + "     Generate your own wordlists with advanced options" + "\033[0m")
+        print("\033[34m" + "-----------------------------------------------------------------" + "\033[0m")
+        print("\033[33m" + "[*] Version 2.1 | By Sagar Budha" + "\033[0m")
+        print("\033[36m" + "[*] Use responsibly and for authorized purposes only!" + "\033[0m")
+        print("\n")
+        time.sleep(2)
+    except Exception as e:
+        print(f"\033[31mError displaying intro: {e}\033[0m")
 
 def generate_wordlist(charset, min_length, max_length, output_file, prefix="", compress=False, max_words=None):
     """
@@ -53,23 +59,32 @@ def generate_wordlist(charset, min_length, max_length, output_file, prefix="", c
         print(f"\033[36m[INFO] Estimated File Size: {estimated_size / (1024 ** 2):.2f} MB\033[0m")
 
         words_generated = 0
-        with open(output_file, "w") as file:
-            with tqdm(total=total_words, desc="Generating Wordlist") as pbar:
-                for length in range(min_length, max_length + 1):
-                    for word in itertools.product(charset, repeat=length):
-                        if max_words and words_generated >= max_words:
-                            break
-                        file.write(prefix + "".join(word) + "\n")
-                        pbar.update(1)
-                        words_generated += 1
+        try:
+            with open(output_file, "w") as file:
+                with tqdm(total=total_words, desc="Generating Wordlist") as pbar:
+                    for length in range(min_length, max_length + 1):
+                        for word in itertools.product(charset, repeat=length):
+                            if max_words and words_generated >= max_words:
+                                break
+                            file.write(prefix + "".join(word) + "\n")
+                            pbar.update(1)
+                            words_generated += 1
+        except OSError as e:
+            print(f"\033[31mError opening or writing to file: {e}\033[0m")
+            return
 
         print(f"\033[32mWordlist successfully saved to '{output_file}'.\033[0m")
 
         if compress:
             zip_file = output_file + ".zip"
-            with zipfile.ZipFile(zip_file, "w") as zipf:
-                zipf.write(output_file)
-            print(f"\033[32mWordlist compressed to '{zip_file}'.\033[0m")
+            try:
+                with zipfile.ZipFile(zip_file, "w") as zipf:
+                    zipf.write(output_file)
+                print(f"\033[32mWordlist compressed to '{zip_file}'.\033[0m")
+            except zipfile.BadZipFile as e:
+                print(f"\033[31mError compressing file: {e}\033[0m")
+            except Exception as e:
+                print(f"\033[31mUnexpected error while compressing: {e}\033[0m")
     except Exception as e:
         print(f"\033[31mError: {e}\033[0m")
 
@@ -87,36 +102,43 @@ def get_input(prompt, valid_values=None, default=None, allow_empty=False):
         str: The user input or default value.
     """
     while True:
-        user_input = input(prompt).strip()
-        if not user_input and allow_empty:
-            return default
-        if valid_values and user_input not in valid_values:
-            print(f"Invalid input. Choose from {', '.join(valid_values)}.")
-            continue
-        return user_input or default
+        try:
+            user_input = input(prompt).strip()
+            if not user_input and allow_empty:
+                return default
+            if valid_values and user_input not in valid_values:
+                print(f"Invalid input. Choose from {', '.join(valid_values)}.")
+                continue
+            return user_input or default
+        except Exception as e:
+            print(f"\033[31mError processing input: {e}\033[0m")
 
 if __name__ == "__main__":
     # Display the starting screen
-    display_intro()
+    try:
+        display_intro()
 
-    print("Available character sets:")
-    for key, value in CHAR_SETS.items():
-        print(f"  {key}: {value}")
+        print("Available character sets:")
+        for key, value in CHAR_SETS.items():
+            print(f"  {key}: {value}")
 
-    # Collect user input
-    char_set_choice = get_input("Choose a character set (Chat, Num, SYM, All) or enter custom characters: ", allow_empty=True)
-    charset = CHAR_SETS.get(char_set_choice, char_set_choice)
+        # Collect user input
+        char_set_choice = get_input("Choose a character set (Chat, Num, SYM, All) or enter custom characters: ", allow_empty=True)
+        charset = CHAR_SETS.get(char_set_choice, char_set_choice)
 
-    exclude_chars = get_input("Enter characters to exclude (leave empty for none): ", allow_empty=True)
-    exclude_chars = exclude_chars or ""  # Avoid None
-    charset = "".join(char for char in charset if char not in exclude_chars)
+        exclude_chars = get_input("Enter characters to exclude (leave empty for none): ", allow_empty=True)
+        exclude_chars = exclude_chars or ""  # Avoid None
+        charset = "".join(char for char in charset if char not in exclude_chars)
 
-    min_length = int(get_input("Enter the minimum word length: "))
-    max_length = int(get_input("Enter the maximum word length: "))
-    output_file = get_input("Enter the output file name (default: wordlist.txt): ", default="wordlist.txt", allow_empty=True)
-    prefix = get_input("Enter a prefix for each word (leave empty for none): ", allow_empty=True, default="")
-    max_words = int(get_input("Enter the maximum number of words to generate (leave empty for unlimited): ", allow_empty=True, default="0")) or None
-    compress = get_input("Compress output to ZIP? (yes/no): ", valid_values=["yes", "no"], default="no") == "yes"
+        min_length = int(get_input("Enter the minimum word length: "))
+        max_length = int(get_input("Enter the maximum word length: "))
+        output_file = get_input("Enter the output file name (default: wordlist.txt): ", default="wordlist.txt", allow_empty=True)
+        prefix = get_input("Enter a prefix for each word (leave empty for none): ", allow_empty=True, default="")
+        max_words = int(get_input("Enter the maximum number of words to generate (leave empty for unlimited): ", allow_empty=True, default="0")) or None
+        compress = get_input("Compress output to ZIP? (yes/no): ", valid_values=["yes", "no"], default="no") == "yes"
 
-    # Generate the wordlist
-    generate_wordlist(charset, min_length, max_length, output_file, prefix, compress, max_words)
+        # Generate the wordlist
+        generate_wordlist(charset, min_length, max_length, output_file, prefix, compress, max_words)
+    except Exception as e:
+        print(f"\033[31mError in main process: {e}\033[0m")
+                    
