@@ -14,7 +14,7 @@ This is a Python script for generating customizable wordlists. It allows you to 
 
 1. Clone this repository:
     ```bash
-    git clone https://github.com/Fdydhchxy54645/Enhanced-Wordlist-Generator/tree/main.git
+    git clone https://github.com/Fdydhchxy54645/Enhanced-Wordlist-Generator.git
     cd Enhanced-Wordlist-Generator
     ```
 
